@@ -1,0 +1,276 @@
+# Trend Scope Configuration
+# Production Environment Settings
+
+# Application Settings
+app:
+  name: "Trend Scope"
+  version: "2.1.0"
+  environment: "production"
+  debug: false
+  log_level: "INFO"
+  timezone: "UTC"
+
+# Data Sources Configuration
+data_sources:
+  kaggle:
+    api_key: "${KAGGLE_API_KEY}"
+    username: "${KAGGLE_USERNAME}"
+    datasets:
+      sales_performance:
+        id: "ramyelbouhy/sales-performance-dashboardpower-bi"
+        refresh_interval: "daily"
+        cache_ttl: 86400  # 24 hours
+      customer_analytics:
+        id: "graceegbe12/sales-and-customer-analytics-interactive-dashboard"
+        refresh_interval: "hourly"
+        cache_ttl: 3600   # 1 hour
+    
+  database:
+    type: "postgresql"
+    host: "${DB_HOST}"
+    port: 5432
+    database: "${DB_NAME}"
+    username: "${DB_USERNAME}"
+    password: "${DB_PASSWORD}"
+    pool_size: 10
+    max_overflow: 20
+    
+  azure_storage:
+    account_name: "${AZURE_STORAGE_ACCOUNT}"
+    account_key: "${AZURE_STORAGE_KEY}"
+    container_name: "trend-scope-data"
+    blob_prefix: "datasets"
+
+# ETL Pipeline Configuration
+etl:
+  batch_size: 10000
+  max_workers: 4
+  timeout: 3600
+  retry_attempts: 3
+  retry_delay: 30
+  
+  validation:
+    enable_schema_validation: true
+    enable_data_profiling: true
+    quality_threshold: 0.95
+    anomaly_threshold: 0.05
+    
+  transformation:
+    enable_parallel_processing: true
+    chunk_size: 50000
+    memory_limit: "4GB"
+    temp_storage: "/tmp/trend-scope"
+
+# Machine Learning Configuration
+ml:
+  models:
+    forecasting:
+      algorithm: "lstm_prophet_ensemble"
+      training_window: 365  # days
+      prediction_horizon: 90  # days
+      retrain_frequency: "weekly"
+      confidence_intervals: [0.8, 0.9, 0.95]
+      
+    anomaly_detection:
+      algorithm: "isolation_forest"
+      contamination: 0.1
+      feature_scaling: "robust"
+      window_size: 30  # days
+      
+    clustering:
+      algorithm: "kmeans"
+      n_clusters: 8
+      max_iterations: 300
+      tolerance: 1e-4
+      
+  training:
+    auto_hyperparameter_tuning: true
+    cross_validation_folds: 5
+    test_size: 0.2
+    random_state: 42
+
+# Tableau Integration
+tableau:
+  server_url: "${TABLEAU_SERVER_URL}"
+  site_id: "${TABLEAU_SITE_ID}"
+  username: "${TABLEAU_USERNAME}"
+  password: "${TABLEAU_PASSWORD}"
+  api_version: "3.19"
+  
+  publishing:
+    project_name: "Executive Dashboards"
+    overwrite_existing: true
+    show_tabs: true
+    enable_refresh: true
+    refresh_schedule: "daily"
+    
+  performance:
+    timeout: 600  # seconds
+    max_retries: 3
+    concurrent_uploads: 2
+
+# Power BI Integration
+powerbi:
+  tenant_id: "${POWERBI_TENANT_ID}"
+  client_id: "${POWERBI_CLIENT_ID}"
+  client_secret: "${POWERBI_CLIENT_SECRET}"
+  workspace_id: "${POWERBI_WORKSPACE_ID}"
+  
+  publishing:
+    dataset_refresh: true
+    import_mode: "push"
+    skip_report: false
+    
+  api:
+    base_url: "https://api.powerbi.com"
+    version: "v1.0"
+    timeout: 300
+
+# Azure Functions Configuration
+azure:
+  subscription_id: "${AZURE_SUBSCRIPTION_ID}"
+  resource_group: "trend-scope-prod"
+  function_app: "trend-scope-pipeline"
+  storage_account: "trendscopedata"
+  
+  functions:
+    daily_refresh:
+      schedule: "0 6 * * *"  # Daily at 6 AM UTC
+      timeout: 900
+      memory: 2048
+      
+    weekly_ml_retrain:
+      schedule: "0 2 * * 0"  # Weekly on Sunday at 2 AM
+      timeout: 3600
+      memory: 4096
+      
+    hourly_monitoring:
+      schedule: "0 * * * *"  # Every hour
+      timeout: 300
+      memory: 512
+
+# Monitoring & Alerting
+monitoring:
+  enable_prometheus: true
+  prometheus_port: 9090
+  
+  health_checks:
+    interval: 60  # seconds
+    timeout: 30
+    endpoints:
+      - "/health"
+      - "/metrics"
+      - "/pipeline/status"
+      
+  alerts:
+    channels:
+      email:
+        enabled: true
+        smtp_server: "${SMTP_SERVER}"
+        smtp_port: 587
+        username: "${SMTP_USERNAME}"
+        password: "${SMTP_PASSWORD}"
+        recipients: ["admin@company.com", "dataops@company.com"]
+        
+      slack:
+        enabled: true
+        webhook_url: "${SLACK_WEBHOOK_URL}"
+        channel: "#data-alerts"
+        
+      teams:
+        enabled: true
+        webhook_url: "${TEAMS_WEBHOOK_URL}"
+        
+    rules:
+      pipeline_failure:
+        severity: "critical"
+        threshold: 1
+        
+      data_quality_degradation:
+        severity: "warning"
+        threshold: 0.05  # 5% degradation
+        
+      performance_degradation:
+        severity: "info"
+        threshold: 2.0  # 2x normal execution time
+
+# Security Configuration
+security:
+  encryption:
+    algorithm: "AES-256-GCM"
+    key_rotation_days: 90
+    
+  authentication:
+    token_expiry: 3600  # seconds
+    max_login_attempts: 5
+    lockout_duration: 900  # seconds
+    
+  data_masking:
+    enable_pii_masking: true
+    masking_patterns:
+      - "email"
+      - "phone"
+      - "ssn"
+      - "credit_card"
+
+# Performance Optimization
+performance:
+  caching:
+    enable_redis: true
+    redis_host: "${REDIS_HOST}"
+    redis_port: 6379
+    redis_db: 0
+    default_ttl: 3600
+    
+  connection_pooling:
+    min_connections: 5
+    max_connections: 20
+    connection_timeout: 30
+    
+  parallel_processing:
+    max_workers: 8
+    queue_size: 1000
+    worker_timeout: 3600
+
+# Logging Configuration
+logging:
+  version: 1
+  disable_existing_loggers: false
+  
+  formatters:
+    standard:
+      format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+      
+    json:
+      format: '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "%(name)s", "message": "%(message)s"}'
+      
+  handlers:
+    console:
+      class: "logging.StreamHandler"
+      level: "INFO"
+      formatter: "standard"
+      stream: "ext://sys.stdout"
+      
+    file:
+      class: "logging.handlers.RotatingFileHandler"
+      level: "DEBUG"
+      formatter: "json"
+      filename: "logs/trend_scope.log"
+      maxBytes: 10485760  # 10MB
+      backupCount: 5
+      
+    azure:
+      class: "azure.monitor.opentelemetry.exporter.AzureMonitorLogExporter"
+      level: "WARNING"
+      formatter: "json"
+      
+  loggers:
+    trend_scope:
+      level: "DEBUG"
+      handlers: ["console", "file", "azure"]
+      propagate: false
+      
+  root:
+    level: "INFO"
+    handlers: ["console"]
